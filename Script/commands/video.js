@@ -1,44 +1,38 @@
-const fetch = require("node-fetch");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const ytSearch = require("yt-search");
 const https = require("https");
 
 module.exports = {
   config: {
     name: "video",
-    version: "1.0.5",
+    version: "1.0.6",
     hasPermssion: 0,
     credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
-    description: "Download YouTube song from keyword search and link",
+    description: "Download a YouTube video from a provided link",
     commandCategory: "Media",
-    usages: "[songName] [type]",
+    usages: "[YouTube video link]",
     cooldowns: 5,
-    dependencies: {
-      "node-fetch": "",
-      "yt-search": "",
-    },
   },
 
   run: async function ({ api, event, args }) {
+    // Ensure a YouTube URL is provided
+    if (!args[0]) {
+      return api.sendMessage("Please provide a YouTube video link.", event.threadID, event.messageID);
+    }
+
+    // Regular expression to extract a video ID from common YouTube URL formats.
     const youtubeUrlPattern = /(?:https?:\/\/)?(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+)/;
-    let songName, type, videoId;
+    const videoLink = args.join(" ").trim();
+    const match = videoLink.match(youtubeUrlPattern);
 
-    if (args.length > 1 && (args[args.length - 1] === "audio" || args[args.length - 1] === "video")) {
-      type = args.pop();
-      songName = args.join(" ");
-    } else {
-      songName = args.join(" ");
-      type = "video";
+    if (!match) {
+      return api.sendMessage("Invalid YouTube video link provided. Please check your URL.", event.threadID, event.messageID);
     }
 
-    // Check if input is a YouTube URL
-    const match = songName.match(youtubeUrlPattern);
-    if (match) {
-      videoId = match[2]; // Extract video ID from URL
-    }
+    const videoId = match[2];
 
+    // Send an initial processing message.
     const processingMessage = await api.sendMessage(
       "✅ Processing your request. Please wait...",
       event.threadID,
@@ -47,57 +41,45 @@ module.exports = {
     );
 
     try {
-      let topResult;
-
-      if (videoId) {
-        topResult = { videoId, title: "Selected Video" }; // Use direct videoId
-      } else {
-        // Search for the song on YouTube
-        const searchResults = await ytSearch(songName);
-        if (!searchResults || !searchResults.videos.length) {
-          throw new Error("No results found for your search query.");
-        }
-        topResult = searchResults.videos[0];
-        videoId = topResult.videoId;
-      }
-
-      // Construct API URL for downloading the video
+      // For this bot, we always set type to 'video'
+      const type = "video";
       const apiKey = "priyansh-here";
       const apiUrl = `https://priyansh-ai.onrender.com/youtube?id=${videoId}&type=${type}&apikey=${apiKey}`;
 
+      // Indicate that processing has started.
       api.setMessageReaction("⌛", event.messageID, () => {}, true);
 
-      // Get the direct download URL from the API
+      // Request the API to get video details and the download URL.
       const downloadResponse = await axios.get(apiUrl);
       if (!downloadResponse.data.downloadUrl) {
         throw new Error("Failed to fetch the download URL.");
       }
 
       let downloadUrl = downloadResponse.data.downloadUrl;
-
-      // Ensure the URL uses HTTPS
+      // If API returns an http URL, convert it to https.
       if (downloadUrl.startsWith("http:")) {
         downloadUrl = downloadUrl.replace("http:", "https:");
       }
 
-      // Set filename based on the song title and type
-      const safeTitle = topResult.title.replace(/[^a-zA-Z0-9 \-_]/g, ""); // Clean the title
-      const filename = `${safeTitle}.${type === "audio" ? "mp3" : "mp4"}`;
+      // Get the video title to create a safe filename.
+      const title = downloadResponse.data.title || "Downloaded_Video";
+      const safeTitle = title.replace(/[^a-zA-Z0-9 \-_]/g, "");
+      const filename = `${safeTitle}.mp4`;
       const downloadDir = path.join(__dirname, "cache");
       const downloadPath = path.join(downloadDir, filename);
 
-      // Ensure the directory exists
+      // Make sure the cache directory exists.
       if (!fs.existsSync(downloadDir)) {
         fs.mkdirSync(downloadDir, { recursive: true });
       }
 
-      // Download the file and save locally
+      // Download the video using the HTTPS module.
       const file = fs.createWriteStream(downloadPath);
-
       await new Promise((resolve, reject) => {
         https.get(downloadUrl, (response) => {
           if (response.statusCode === 200) {
-            response file.on("finish", () => {
+            response.pipe(file);
+            file.on("finish", () => {
               file.close(resolve);
             });
           } else {
@@ -109,26 +91,27 @@ module.exports = {
         });
       });
 
+      // Update reaction to show completion.
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-      // Send the downloaded file to the user
+      // Send the downloaded video file to the Messenger group.
       await api.sendMessage(
         {
           attachment: fs.createReadStream(downloadPath),
-          body: `🖤 Title: ${topResult.title}\n\n Here is your ${
-            type === "audio" ? "audio" : "video"
-          } 🎧:`,
+          body: `🖤 Title: ${title}\n\nHere is your video 🎧:`,
         },
         event.threadID,
-          fs.unlinkSync(downloadPath); // Cleanup after sending
+        () => {
+          // Cleanup the downloaded file and remove the processing message.
+          fs.unlinkSync(downloadPath);
           api.unsendMessage(processingMessage.messageID);
         },
         event.messageID
       );
     } catch (error) {
-      console.error(`Failed to download and send song: ${error.message}`);
+      console.error(`Failed to download and send video: ${error.message}`);
       api.sendMessage(
-        `Failed to download song: ${error.message}`,
+        `Failed to download video: ${error.message}`,
         event.threadID,
         event.messageID
       );
