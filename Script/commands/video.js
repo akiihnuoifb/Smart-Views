@@ -8,7 +8,7 @@ const https = require("https");
 module.exports = {
   config: {
     name: "video",
-    version: "1.0.4",
+    version: "1.0.5",
     hasPermssion: 0,
     credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
     description: "Download YouTube song from keyword search and link",
@@ -73,7 +73,12 @@ module.exports = {
         throw new Error("Failed to fetch the download URL.");
       }
 
-      const downloadUrl = downloadResponse.data.downloadUrl;
+      let downloadUrl = downloadResponse.data.downloadUrl;
+
+      // Ensure the URL uses HTTPS
+      if (downloadUrl.startsWith("http:")) {
+        downloadUrl = downloadUrl.replace("http:", "https:");
+      }
 
       // Set filename based on the song title and type
       const safeTitle = topResult.title.replace(/[^a-zA-Z0-9 \-_]/g, ""); // Clean the title
@@ -92,8 +97,7 @@ module.exports = {
       await new Promise((resolve, reject) => {
         https.get(downloadUrl, (response) => {
           if (response.statusCode === 200) {
-            response.pipe(file);
-            file.on("finish", () => {
+            response file.on("finish", () => {
               file.close(resolve);
             });
           } else {
@@ -116,7 +120,6 @@ module.exports = {
           } 🎧:`,
         },
         event.threadID,
-        () => {
           fs.unlinkSync(downloadPath); // Cleanup after sending
           api.unsendMessage(processingMessage.messageID);
         },
