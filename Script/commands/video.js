@@ -8,7 +8,7 @@ const https = require("https");
 module.exports = {
   config: {
     name: "video",
-    version: "1.0.3",
+    version: "1.0.4",
     hasPermssion: 0,
     credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
     description: "Download YouTube song from keyword search and link",
@@ -22,17 +22,21 @@ module.exports = {
   },
 
   run: async function ({ api, event, args }) {
-    let songName, type;
+    const youtubeUrlPattern = /(?:https?:\/\/)?(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+)/;
+    let songName, type, videoId;
 
-    if (
-      args.length > 1 &&
-      (args[args.length - 1] === "audio" || args[args.length - 1] === "video")
-    ) {
+    if (args.length > 1 && (args[args.length - 1] === "audio" || args[args.length - 1] === "video")) {
       type = args.pop();
       songName = args.join(" ");
     } else {
       songName = args.join(" ");
       type = "video";
+    }
+
+    // Check if input is a YouTube URL
+    const match = songName.match(youtubeUrlPattern);
+    if (match) {
+      videoId = match[2]; // Extract video ID from URL
     }
 
     const processingMessage = await api.sendMessage(
@@ -43,17 +47,21 @@ module.exports = {
     );
 
     try {
-      // Search for the song on YouTube
-      const searchResults = await ytSearch(songName);
-      if (!searchResults || !searchResults.videos.length) {
-        throw new Error("No results found for your search query.");
+      let topResult;
+
+      if (videoId) {
+        topResult = { videoId, title: "Selected Video" }; // Use direct videoId
+      } else {
+        // Search for the song on YouTube
+        const searchResults = await ytSearch(songName);
+        if (!searchResults || !searchResults.videos.length) {
+          throw new Error("No results found for your search query.");
+        }
+        topResult = searchResults.videos[0];
+        videoId = topResult.videoId;
       }
 
-      // Get the top result from the search
-      const topResult = searchResults.videos[0];
-      const videoId = topResult.videoId;
-
-      // Construct API URL for downloading the top result
+      // Construct API URL for downloading the video
       const apiKey = "priyansh-here";
       const apiUrl = `https://priyansh-ai.onrender.com/youtube?id=${videoId}&type=${type}&apikey=${apiKey}`;
 
@@ -61,9 +69,13 @@ module.exports = {
 
       // Get the direct download URL from the API
       const downloadResponse = await axios.get(apiUrl);
+      if (!downloadResponse.data.downloadUrl) {
+        throw new Error("Failed to fetch the download URL.");
+      }
+
       const downloadUrl = downloadResponse.data.downloadUrl;
 
-      // Set the filename based on the song title and type
+      // Set filename based on the song title and type
       const safeTitle = topResult.title.replace(/[^a-zA-Z0-9 \-_]/g, ""); // Clean the title
       const filename = `${safeTitle}.${type === "audio" ? "mp3" : "mp4"}`;
       const downloadDir = path.join(__dirname, "cache");
@@ -85,9 +97,7 @@ module.exports = {
               file.close(resolve);
             });
           } else {
-            reject(
-              new Error(`Failed to download file. Status code: ${response.statusCode}`)
-            );
+            reject(new Error(`Failed to download file. Status code: ${response.statusCode}`));
           }
         }).on("error", (error) => {
           fs.unlinkSync(downloadPath);
