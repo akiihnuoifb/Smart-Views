@@ -44,7 +44,7 @@ ${global.config.PREFIX}Help\n${global.config.PREFIX} Manu
 𝐁𝐎𝐓 𝐍𝐀𝐌𝐄 :𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️
 
 \n\n⋆✦⋆⎯⎯⎯⎯⎯⎯⎯⎯⎯⋆✦⋆
-`, attachment: fs.createReadStream(__dirname + "/cache/ullash.mp4")} ,threadID));
+`, attachment: fs.createReadStream(__dirname + "/cache/")} ,threadID));
     }
     else {
         try {
