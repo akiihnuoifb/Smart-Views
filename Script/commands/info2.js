@@ -1,53 +1,73 @@
 module.exports.config = {
-	name: "inf",
-	version: "1.0.1", 
-	hasPermssion: 0,
-	credits: "MrTomXxX", //don't change the credits please
-	description: "Admin and Bot info.",
-	commandCategory: "...",
-	cooldowns: 1,
-	dependencies: 
-	{
-    "request":"",
-    "fs-extra":"",
-    "axios":""
+  name: "inf",
+  version: "1.0.1", 
+  hasPermssion: 0,
+  credits: "MrTomXxX", // please keep the credits intact
+  description: "Admin and Bot info.",
+  commandCategory: "...",
+  cooldowns: 1,
+  dependencies: {
+    "request": "",
+    "fs-extra": "",
+    "axios": ""
   }
 };
-module.exports.run = async function({ api,event,args,client,Users,Threads,__GLOBAL,Currencies }) {
-const axios = global.nodemodule["axios"];
-const request = global.nodemodule["request"];
-const fs = global.nodemodule["fs-extra"];
-const time = process.uptime(),
-		hours = Math.floor(time / (60 * 60)),
-		minutes = Math.floor((time % (60 * 60)) / 60),
-		seconds = Math.floor(time % 60);
-const moment = require("moment-timezone");
-var juswa = moment.tz("Asia/Dhaka").format("『D/MM/YYYY』 【HH:mm:ss】");
-var link = ["https://i.imgur.com/afSpOv6.gif", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg"];
-var callback = () => api.sendMessage({body:`✦𝗔𝗗𝗠𝗜𝗠 𝗔𝗡𝗗 𝗕𝗢𝗧 𝗜𝗡𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗢𝗡✦
 
-⁂BoT NaMe ⊂◉‿◉: ${global.config.BOTNAME}
+module.exports.run = async function({ api, event, args, client, Users, Threads, __GLOBAL, Currencies }) {
+  const axios = global.nodemodule["axios"];
+  const request = global.nodemodule["request"];
+  const fs = global.nodemodule["fs-extra"];
+  const time = process.uptime(),
+        hours = Math.floor(time / (60 * 60)),
+        minutes = Math.floor((time % (60 * 60)) / 60),
+        seconds = Math.floor(time % 60);
+  const moment = require("moment-timezone");
+  const juswa = moment.tz("Asia/Dhaka").format("『D/MM/YYYY』 【HH:mm:ss】");
 
-✡BoT Prefix ◉‿◉: ${global.config.PREFIX}
+  // Array of image URLs for dynamic backgrounds.
+  const link = [
+    "https://i.imgur.com/afSpOv6.gif", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg", 
+    "https://i.postimg.cc/rpLppqWX/IMG-20250503-182404.jpg"
+  ];
 
-༻𝐎𝐖𝐍𝐄𝐑:- ☞ABIR HASAN☜ ༺
-༒𝚈𝚘𝚞 𝙲𝚊𝚗 𝙲𝚊𝚕𝚕 𝙷𝚒𝚖 〠ABIR〠.༒
+  // Constructing a message with a square border and interactive emojis.
+  const message = `
+╔════════════════════════════════════╗
+║        **ADMIN & BOT INFORMATION**        ║
+╠════════════════════════════════════╣
+║ 📌 **Bot Name:** ${global.config.BOTNAME}                
+║ 📌 **Bot Prefix:** ${global.config.PREFIX}               
+╠════════════════════════════════════╣
+║ 👑 **Owner:** ABIR HASAN                    
+║ 🔗 **Facebook:** [Visit](https://www.facebook.com/ABIRMAHMMUD1344)        
+║ 🌐 **Website:** [Explore](https://abir7109.github.io/cyberabir/)          
+║ 📞 **Contact:** +8801919069898              
+╠════════════════════════════════════╣
+║ ⏱ **Uptime:** ${hours}h : ${minutes}m : ${seconds}s       
+║ 🗓 **Today is:** ${juswa}      
+╠════════════════════════════════════╣
+║ ❤️ **Thanks for using ${global.config.BOTNAME} Bot!**       
+╚════════════════════════════════════╝
+`;
 
-༒𝐇𝐢𝐬 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 𝐢𝐝༒:- ☞ https://www.facebook.com/ABIRMAHMMUD1344 ☜ 
+  // Callback to send the message with an attached image, then remove the cached image.
+  var callback = () => api.sendMessage(
+    {
+      body: message,
+      attachment: fs.createReadStream(__dirname + "/cache/juswa.jpg")
+    },
+    event.threadID,
+    () => fs.unlinkSync(__dirname + "/cache/juswa.jpg")
+  );
 
-༻WEBSITE 𝘭𝘪𝘯𝘬༺:- 
-☞ https://abir7109.github.io/cyberabir/ ☜
-
-֎𝘍𝘰𝘳 𝘈𝘯𝘺 𝘒𝘪𝘯𝘥 𝘖𝘧 𝘏𝘦𝘭𝘱 ֍:-
-
- ֎𝘊𝘰𝘯𝘵𝘢𝘤𝘵 𝘔𝘦 𝘖𝘯 𝘞𝘩𝘢𝘵𝘴𝘈𝘱𝘱֍ :-  ☞+8801919069898 ☜
- 
-➟UPTIME☆
-
-✬Today Is: ${juswa} 
-
-➳BoT Is Running ${hours}:${minutes}:${seconds}.
-
-✫Thanks For Using ${global.config.BOTNAME} BoT!`,attachment: fs.createReadStream(__dirname + "/cache/juswa.jpg")}, event.threadID, () => fs.unlinkSync(__dirname + "/cache/juswa.jpg")); 
-      return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname+"/cache/juswa.jpg")).on("close",() => callback());
-   };;
+  // Download a random background image then trigger the callback.
+  return request(encodeURI(link[Math.floor(Math.random() * link.length)]))
+    .pipe(fs.createWriteStream(__dirname + "/cache/juswa.jpg"))
+    .on("close", () => callback());
+};
